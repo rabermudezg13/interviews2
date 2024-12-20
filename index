@@ -1,0 +1,43 @@
+<!-- Añadir en la sección de botones -->
+<div class="buttons-container">
+    <!-- ... botones existentes ... -->
+    <div class="filter-section">
+        <select id="sortBy" onchange="applyFilters()">
+            <option value="date-desc">Date (Newest First)</option>
+            <option value="date-asc">Date (Oldest First)</option>
+            <option value="steps-desc">Most Pending Steps</option>
+            <option value="steps-asc">Least Pending Steps</option>
+        </select>
+    </div>
+</div>
+
+<!-- Añadir antes del dataframe -->
+<div id="statsSection" class="stats-section">
+    <h3>Daily Statistics</h3>
+    <div id="dailyStats" class="daily-stats"></div>
+</div>
+
+<!-- Modal para editar -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Edit Talent Details</h2>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <div class="form-group">
+                <label for="editSteps">Pending Steps:</label>
+                <textarea id="editSteps" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editStatus">Status:</label>
+                <select id="editStatus" required>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="On Hold">On Hold</option>
+                </select>
+            </div>
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+</div>
