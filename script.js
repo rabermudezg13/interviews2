@@ -19,35 +19,6 @@ function showDataframe() {
     updateDataframe();
 }
 
-// Form submission
-document.getElementById('talentForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    showLoading();
-    
-    try {
-        const talent = {
-            name: document.getElementById('name').value,
-            id: document.getElementById('id').value,
-            phone: document.getElementById('phone').value,
-            email: document.getElementById('email').value,
-            visitDate: document.getElementById('visitDate').value,
-            status: document.getElementById('status').value,
-            pendingSteps: document.getElementById('pendingSteps').value,
-            createdAt: new Date().toISOString()
-        };
-        
-        await db.collection('talents').add(talent);
-        alert('Talent added successfully');
-        this.reset();
-        showDataframe();
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving talent: ' + error.message);
-    } finally {
-        hideLoading();
-    }
-});
-
 // Update dataframe
 async function updateDataframe() {
     showLoading();
@@ -104,9 +75,8 @@ async function deleteTalent(id) {
     }
 }
 
-// Initial load
+// Initial load - Wrap everything in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
-    showForm();
     // Verify connection
     db.collection('talents').get()
         .then(() => console.log('Connected to Firestore'))
@@ -114,4 +84,39 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Connection error:', error);
             alert('Error connecting to database: ' + error.message);
         });
+
+    // Show initial form
+    showForm();
+
+    // Add form submission handler
+    const talentForm = document.getElementById('talentForm');
+    if (talentForm) {
+        talentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading();
+            
+            try {
+                const talent = {
+                    name: document.getElementById('name').value,
+                    id: document.getElementById('id').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value,
+                    visitDate: document.getElementById('visitDate').value,
+                    status: document.getElementById('status').value,
+                    pendingSteps: document.getElementById('pendingSteps').value,
+                    createdAt: new Date().toISOString()
+                };
+                
+                await db.collection('talents').add(talent);
+                alert('Talent added successfully');
+                this.reset();
+                showDataframe();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving talent: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+    }
 });
