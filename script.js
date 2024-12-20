@@ -1,4 +1,9 @@
-// Navigation Functions
+// Verificar conexión a Firestore
+db.collection('talents').get()
+    .then(() => console.log('Conexión a Firestore exitosa'))
+    .catch(error => console.error('Error de conexión:', error));
+
+// Funciones de navegación
 function showForm() {
     document.getElementById('formSection').style.display = 'block';
     document.getElementById('searchSection').style.display = 'none';
@@ -18,33 +23,34 @@ function showDataframe() {
     updateDataframe();
 }
 
-// Form submission
+// Manejar el formulario
 document.getElementById('talentForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const talent = {
-        name: document.getElementById('name').value,
-        id: document.getElementById('id').value,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        visitDate: document.getElementById('visitDate').value,
-        status: document.getElementById('status').value,
-        pendingSteps: document.getElementById('pendingSteps').value,
-        createdAt: new Date().toISOString()
-    };
-    
     try {
+        const talent = {
+            name: document.getElementById('name').value,
+            id: document.getElementById('id').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            visitDate: document.getElementById('visitDate').value,
+            status: document.getElementById('status').value,
+            pendingSteps: document.getElementById('pendingSteps').value,
+            createdAt: new Date().toISOString()
+        };
+        
         await db.collection('talents').add(talent);
+        console.log('Talent saved successfully');
         alert('Talent added successfully');
         this.reset();
         showDataframe();
     } catch (error) {
-        console.error("Error adding talent: ", error);
-        alert('Error adding talent');
+        console.error('Error saving talent:', error);
+        alert('Error saving talent: ' + error.message);
     }
 });
 
-// Update dataframe
+// Actualizar tabla
 async function updateDataframe() {
     try {
         const snapshot = await db.collection('talents').get();
@@ -74,67 +80,26 @@ async function updateDataframe() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error("Error loading talents: ", error);
+        console.error('Error loading talents:', error);
+        alert('Error loading talents: ' + error.message);
     }
 }
 
-// Search talents
-async function searchTalents() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = '';
-
-    try {
-        const snapshot = await db.collection('talents').get();
-        const talents = [];
-        
-        snapshot.forEach(doc => {
-            const talent = doc.data();
-            if (talent.name.toLowerCase().includes(searchTerm) || 
-                talent.id.includes(searchTerm)) {
-                talents.push({ id: doc.id, ...talent });
-            }
-        });
-
-        if (talents.length === 0) {
-            resultsDiv.innerHTML = '<p>No results found</p>';
-            return;
-        }
-
-        talents.forEach(talent => {
-            const card = document.createElement('div');
-            card.className = 'result-card';
-            card.innerHTML = `
-                <h3>${talent.name}</h3>
-                <p>ID: ${talent.id}</p>
-                <p>Phone: ${talent.phone}</p>
-                <p>Email: ${talent.email}</p>
-                <p>Visit Date: ${talent.visitDate}</p>
-                <p>Status: ${talent.status}</p>
-                <p>Pending Steps: ${talent.pendingSteps}</p>
-            `;
-            resultsDiv.appendChild(card);
-        });
-    } catch (error) {
-        console.error("Error searching talents: ", error);
-        resultsDiv.innerHTML = '<p>Error searching talents</p>';
-    }
-}
-
-// Delete talent
+// Eliminar talento
 async function deleteTalent(id) {
     if (confirm('Are you sure you want to delete this talent?')) {
         try {
             await db.collection('talents').doc(id).delete();
+            console.log('Talent deleted successfully');
             updateDataframe();
         } catch (error) {
-            console.error("Error deleting talent: ", error);
-            alert('Error deleting talent');
+            console.error('Error deleting talent:', error);
+            alert('Error deleting talent: ' + error.message);
         }
     }
 }
 
-// Load initial data
+// Cargar datos iniciales
 document.addEventListener('DOMContentLoaded', function() {
-    showForm(); // Show form by default
+    showForm();
 });
