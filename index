@@ -145,12 +145,12 @@
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "TU-API-KEY",
-            authDomain: "tu-proyecto.firebaseapp.com",
-            projectId: "tu-proyecto",
-            storageBucket: "tu-proyecto.appspot.com",
-            messagingSenderId: "tu-messaging-id",
-            appId: "tu-app-id"
+            apiKey: "1:761646780224:web:91b5b02531664af11a34a5",
+            authDomain: "invitations-9ccbe.firebaseapp.com",
+            projectId: "invitations-9ccbe",
+            storageBucket: "invitations-9ccbe.firebasestorage.app",
+            messagingSenderId: "761646780224",
+            appId: "1:761646780224:web:91b5b02531664af11a34a5"
         };
 
         // Initialize Firebase
