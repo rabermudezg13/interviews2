@@ -19,6 +19,34 @@ function showDataframe() {
     updateDataframe();
 }
 
+// Modal functions
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+async function editTalent(id) {
+    try {
+        const doc = await db.collection('talents').doc(id).get();
+        if (doc.exists) {
+            const talent = doc.data();
+            
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = talent.name;
+            document.getElementById('editIdNumber').value = talent.id;
+            document.getElementById('editPhone').value = talent.phone;
+            document.getElementById('editEmail').value = talent.email;
+            document.getElementById('editVisitDate').value = talent.visitDate;
+            document.getElementById('editStatus').value = talent.status;
+            document.getElementById('editPendingSteps').value = talent.pendingSteps;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error loading talent data');
+    }
+}
+
 // Update dataframe
 async function updateDataframe() {
     showLoading();
@@ -44,6 +72,9 @@ async function updateDataframe() {
                 <td><span class="status-badge status-${(talent.status || '').toLowerCase().replace(' ', '-')}">${talent.status || ''}</span></td>
                 <td>${talent.pendingSteps || ''}</td>
                 <td>
+                    <button onclick="editTalent('${doc.id}')" class="edit-btn">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button onclick="deleteTalent('${doc.id}')" class="delete-btn">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -75,16 +106,8 @@ async function deleteTalent(id) {
     }
 }
 
-// Initial load - Wrap everything in DOMContentLoaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Verify connection
-    db.collection('talents').get()
-        .then(() => console.log('Connected to Firestore'))
-        .catch(error => {
-            console.error('Connection error:', error);
-            alert('Error connecting to database: ' + error.message);
-        });
-
     // Show initial form
     showForm();
 
@@ -119,4 +142,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Add edit form submission handler
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading();
+
+            try {
+                const id = document.getElementById('editId').value;
+                const updatedTalent = {
+                    name: document.getElementById('editName').value,
+                    id: document.getElementById('editIdNumber').value,
+                    phone: document.getElementById('editPhone').value,
+                    email: document.getElementById('editEmail').value,
+                    visitDate: document.getElementById('editVisitDate').value,
+                    status: document.getElementById('editStatus').value,
+                    pendingSteps: document.getElementById('editPendingSteps').value,
+                    updatedAt: new Date().toISOString()
+                };
+
+                await db.collection('talents').doc(id).update(updatedTalent);
+                closeModal();
+                updateDataframe();
+                alert('Talent updated successfully');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating talent: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+    }
+
+    // Modal close handlers
+    document.querySelector('.close').addEventListener('click', closeModal);
+    window.addEventListener('click', function(event) {
+        if (event.target == document.getElementById('editModal')) {
+            closeModal();
+        }
+    });
 });
