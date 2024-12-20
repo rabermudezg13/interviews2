@@ -26,6 +26,7 @@
             </button>
         </div>
 
+        <!-- Form Section -->
         <div id="formSection" class="form-section">
             <h2>Add New Talent</h2>
             <form id="talentForm">
@@ -73,6 +74,7 @@
             </form>
         </div>
 
+        <!-- Table Section -->
         <div id="dataframeSection" class="dataframe-section" style="display: none;">
             <h2>All Talents</h2>
             <div class="table-container">
@@ -91,6 +93,58 @@
                     </thead>
                     <tbody id="dataframeBody"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Edit Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Edit Talent</h2>
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label for="editName">Name:</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editIdNumber">ID:</label>
+                        <input type="text" id="editIdNumber" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editPhone">Phone:</label>
+                        <input type="tel" id="editPhone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editEmail">Email:</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editVisitDate">Visit Date:</label>
+                        <input type="date" id="editVisitDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editStatus">Status:</label>
+                        <select id="editStatus" required>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="On Hold">On Hold</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editPendingSteps">Pending Steps:</label>
+                        <textarea id="editPendingSteps" required></textarea>
+                    </div>
+
+                    <button type="submit">Update Talent</button>
+                </form>
             </div>
         </div>
     </div>
