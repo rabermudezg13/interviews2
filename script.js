@@ -1,20 +1,17 @@
-// Añadir al inicio del archivo
-// Configurar Firebase
-const firebaseConfig = {
-    // Tus credenciales de Firebase aquí
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// Modificar la función de guardar para usar Firebase
+// Función para guardar un nuevo talento
 async function saveTalent(talent) {
     try {
-        await db.collection('talents').add({
-            ...talent,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        const docRef = await addDoc(collection(window.db, "talents"), {
+            name: talent.name,
+            id: talent.id,
+            phone: talent.phone,
+            email: talent.email,
+            visitDate: talent.visitDate,
+            status: talent.status,
+            pendingSteps: talent.pendingSteps,
+            createdAt: new Date().toISOString()
         });
+        console.log("Talent saved with ID: ", docRef.id);
         return true;
     } catch (error) {
         console.error("Error saving talent: ", error);
@@ -22,13 +19,13 @@ async function saveTalent(talent) {
     }
 }
 
-// Función para cargar datos
+// Función para cargar todos los talentos
 async function loadTalents() {
     try {
-        const snapshot = await db.collection('talents').get();
+        const querySnapshot = await getDocs(collection(window.db, "talents"));
         const talents = [];
-        snapshot.forEach(doc => {
-            talents.push({ id: doc.id, ...doc.data() });
+        querySnapshot.forEach((doc) => {
+            talents.push({ ...doc.data(), firebaseId: doc.id });
         });
         return talents;
     } catch (error) {
@@ -37,90 +34,108 @@ async function loadTalents() {
     }
 }
 
-// Función para aplicar filtros
-function applyFilters() {
-    const sortBy = document.getElementById('sortBy').value;
-    let talents = JSON.parse(localStorage.getItem('talents') || '[]');
-    
-    switch(sortBy) {
-        case 'date-desc':
-            talents.sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate));
-            break;
-        case 'date-asc':
-            talents.sort((a, b) => new Date(a.visitDate) - new Date(b.visitDate));
-            break;
-        case 'steps-desc':
-            talents.sort((a, b) => b.pendingSteps.split(',').length - a.pendingSteps.split(',').length);
-            break;
-        case 'steps-asc':
-            talents.sort((a, b) => a.pendingSteps.split(',').length - b.pendingSteps.split(',').length);
-            break;
+// Función para actualizar un talento
+async function updateTalent(firebaseId, updatedData) {
+    try {
+        const talentRef = doc(window.db, "talents", firebaseId);
+        await updateDoc(talentRef, {
+            ...updatedData,
+            lastUpdated: new Date().toISOString()
+        });
+        return true;
+    } catch (error) {
+        console.error("Error updating talent: ", error);
+        return false;
     }
+}
+
+// Función para eliminar un talento
+async function deleteTalent(firebaseId) {
+    try {
+        await deleteDoc(doc(window.db, "talents", firebaseId));
+        return true;
+    } catch (error) {
+        console.error("Error deleting talent: ", error);
+        return false;
+    }
+}
+
+// Event Listener para el formulario
+document.getElementById('talentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
     
-    updateDataframe(talents);
+    const talent = {
+        name: document.getElementById('name').value,
+        id: document.getElementById('id').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        visitDate: document.getElementById('visitDate').value,
+        status: document.getElementById('status').value,
+        pendingSteps: document.getElementById('pendingSteps').value
+    };
+    
+    const saved = await saveTalent(talent);
+    if (saved) {
+        alert('Talent added successfully');
+        this.reset();
+        await updateDataframe();
+    } else {
+        alert('Error saving talent');
+    }
+});
+
+// Función para actualizar el dataframe
+async function updateDataframe() {
+    const talents = await loadTalents();
+    const tbody = document.getElementById('dataframeBody');
+    tbody.innerHTML = '';
+
+    talents.sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate))
+          .forEach(talent => {
+        const tr = document.createElement('tr');
+        const statusClass = `status-${talent.status.toLowerCase().replace(' ', '-')}`;
+        tr.innerHTML = `
+            <td>${talent.name}</td>
+            <td>${talent.id}</td>
+            <td><a href="tel:${talent.phone}">${talent.phone}</a></td>
+            <td><a href="mailto:${talent.email}">${talent.email}</a></td>
+            <td>${formatDate(talent.visitDate)}</td>
+            <td><span class="status-badge ${statusClass}">${talent.status}</span></td>
+            <td>${talent.pendingSteps}</td>
+            <td>
+                <button onclick="editTalent('${talent.firebaseId}')" class="edit-btn">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="confirmDelete('${talent.firebaseId}')" class="delete-btn">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
     updateDailyStats(talents);
 }
 
-// Función para actualizar estadísticas diarias
-function updateDailyStats(talents) {
-    const dailyStats = talents.reduce((acc, talent) => {
-        const date = talent.visitDate;
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-    }, {});
-
-    const statsDiv = document.getElementById('dailyStats');
-    statsDiv.innerHTML = '';
-
-    Object.entries(dailyStats)
-        .sort(([dateA], [dateB]) => new Date(dateB) - new Date(dateA))
-        .forEach(([date, count]) => {
-            const statCard = document.createElement('div');
-            statCard.className = 'stat-card';
-            statCard.innerHTML = `
-                <div class="stat-date">${formatDate(date)}</div>
-                <div class="stat-count">${count} interviews</div>
-            `;
-            statsDiv.appendChild(statCard);
-        });
-}
-
-// Función para editar talento
-function editTalent(id) {
-    const talents = JSON.parse(localStorage.getItem('talents') || '[]');
-    const talent = talents.find(t => t.id === id);
-    
-    if (talent) {
-        document.getElementById('editId').value = id;
-        document.getElementById('editSteps').value = talent.pendingSteps;
-        document.getElementById('editStatus').value = talent.status;
-        
-        const modal = document.getElementById('editModal');
-        modal.style.display = 'block';
+// Función para confirmar eliminación
+async function confirmDelete(firebaseId) {
+    if (confirm('Are you sure you want to delete this talent?')) {
+        const deleted = await deleteTalent(firebaseId);
+        if (deleted) {
+            await updateDataframe();
+        } else {
+            alert('Error deleting talent');
+        }
     }
 }
 
-// Manejar el guardado de ediciones
-document.getElementById('editForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const id = document.getElementById('editId').value;
-    const newSteps = document.getElementById('editSteps').value;
-    const newStatus = document.getElementById('editStatus').value;
-    
-    let talents = JSON.parse(localStorage.getItem('talents') || '[]');
-    const index = talents.findIndex(t => t.id === id);
-    
-    if (index !== -1) {
-        talents[index] = {
-            ...talents[index],
-            pendingSteps: newSteps,
-            status: newStatus,
-            lastUpdated: new Date().toISOString()
-        };
-        
-        localStorage.setItem('talents', JSON.stringify(talents));
-        document.getElementById('editModal').style.display = 'none';
-        applyFilters();
-    }
+// Función para formatear fechas
+function formatDate(dateString) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+// Cargar datos al iniciar
+document.addEventListener('DOMContentLoaded', async function() {
+    await updateDataframe();
 });
